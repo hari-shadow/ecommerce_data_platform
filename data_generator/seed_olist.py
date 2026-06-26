@@ -5,7 +5,7 @@ import os
 
 load_dotenv()
 
-conn = psycopg2.connect(os.getenv("SUPABASE_URL"))
+conn = psycopg2.connect(os.getenv("NEONDB_URL"))
 cur = conn.cursor()
 
 # Path to your CSV files
@@ -14,15 +14,15 @@ DATA_PATH = "D:\\Downloads\\olist_data\\"
 def load_csv(filename):
     return pd.read_csv(DATA_PATH + filename)
 
-# 1. Customers
-print("Loading customers...")
-customers = load_csv("olist_customers_dataset.csv")
-for _, row in customers.iterrows():
-    cur.execute("""
-        INSERT INTO customers (customer_id, customer_unique_id, customer_zip_code_prefix, customer_city, customer_state)
-        VALUES (%s, %s, %s, %s, %s)
-        ON CONFLICT (customer_id) DO NOTHING
-    """, (row.customer_id, row.customer_unique_id, str(row.customer_zip_code_prefix), row.customer_city, row.customer_state))
+# # 1. Customers
+# print("Loading customers...")
+# customers = load_csv("olist_customers_dataset.csv")
+# for _, row in customers.iterrows():
+#     cur.execute("""
+#         INSERT INTO customers (customer_id, customer_unique_id, customer_zip_code_prefix, customer_city, customer_state)
+#         VALUES (%s, %s, %s, %s, %s)
+#         ON CONFLICT (customer_id) DO NOTHING
+#     """, (row.customer_id, row.customer_unique_id, str(row.customer_zip_code_prefix), row.customer_city, row.customer_state))
 
 # 2. Sellers
 print("Loading sellers...")
