@@ -1,0 +1,206 @@
+
+-- STORAGE INTEGRATION
+
+USE ROLE ACCOUNTADMIN;
+
+CREATE STORAGE INTEGRATION IF NOT EXISTS s3_bronze_integration
+  TYPE = EXTERNAL_STAGE
+  STORAGE_PROVIDER = 'S3'
+  ENABLED = TRUE
+  STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::<AWS_ID>:role/snowflake-s3-role'
+  STORAGE_ALLOWED_LOCATIONS = ('s3://ecommerce-bronze-bucket/');
+
+-------------------------------------------------------------------
+
+DESC INTEGRATION s3_bronze_integration;
+
+-------------------------------------------------------------------
+
+
+
+-- EXTERNAL STAGE
+
+USE ROLE ACCOUNTADMIN;
+USE DATABASE ECOMMERCE_BRONZE_DB;
+
+CREATE STAGE IF NOT EXISTS ECOMMERCE_BRONZE_DB.OLIST.s3_olist_stage
+  STORAGE_INTEGRATION = s3_bronze_integration
+  URL = 's3://ecommerce-bronze-bucket/olist/'
+  FILE_FORMAT = (TYPE = PARQUET);
+
+-------------------------------------------------------------------
+
+USE ROLE ACCOUNTADMIN;
+LIST @ECOMMERCE_BRONZE_DB.OLIST.s3_olist_stage;
+-------------------------------------------------------------------
+
+
+
+-- RAW TABLES
+
+USE ROLE ACCOUNTADMIN;
+USE DATABASE ECOMMERCE_BRONZE_DB;
+USE SCHEMA OLIST;
+
+CREATE TABLE IF NOT EXISTS CUSTOMERS_RAW (
+  _raw_data        VARIANT,
+  _stg_file_name   TEXT,
+  _stg_load_time   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+CREATE TABLE IF NOT EXISTS ORDERS_RAW (
+  _raw_data        VARIANT,
+  _stg_file_name   TEXT,
+  _stg_load_time   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+CREATE TABLE IF NOT EXISTS ORDER_ITEMS_RAW (
+  _raw_data        VARIANT,
+  _stg_file_name   TEXT,
+  _stg_load_time   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+CREATE TABLE IF NOT EXISTS ORDER_PAYMENTS_RAW (
+  _raw_data        VARIANT,
+  _stg_file_name   TEXT,
+  _stg_load_time   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+CREATE TABLE IF NOT EXISTS ORDER_REVIEWS_RAW (
+  _raw_data        VARIANT,
+  _stg_file_name   TEXT,
+  _stg_load_time   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+CREATE TABLE IF NOT EXISTS PRODUCTS_RAW (
+  _raw_data        VARIANT,
+  _stg_file_name   TEXT,
+  _stg_load_time   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+CREATE TABLE IF NOT EXISTS SELLERS_RAW (
+  _raw_data        VARIANT,
+  _stg_file_name   TEXT,
+  _stg_load_time   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+-------------------------------------------------------------------
+
+
+-- SNOWPIPES
+
+USE ROLE ACCOUNTADMIN;
+USE DATABASE ECOMMERCE_BRONZE_DB;
+USE SCHEMA OLIST;
+
+CREATE PIPE IF NOT EXISTS PIPE_CUSTOMERS
+  AUTO_INGEST = TRUE
+AS
+COPY INTO CUSTOMERS_RAW (_raw_data, _stg_file_name)
+FROM (
+  SELECT $1, METADATA$FILENAME
+  FROM @ECOMMERCE_BRONZE_DB.OLIST.s3_olist_stage/customers/
+)
+FILE_FORMAT = (TYPE = PARQUET);
+
+CREATE PIPE IF NOT EXISTS PIPE_ORDERS
+  AUTO_INGEST = TRUE
+AS
+COPY INTO ORDERS_RAW (_raw_data, _stg_file_name)
+FROM (
+  SELECT $1, METADATA$FILENAME
+  FROM @ECOMMERCE_BRONZE_DB.OLIST.s3_olist_stage/orders/
+)
+FILE_FORMAT = (TYPE = PARQUET);
+
+CREATE PIPE IF NOT EXISTS PIPE_ORDER_ITEMS
+  AUTO_INGEST = TRUE
+AS
+COPY INTO ORDER_ITEMS_RAW (_raw_data, _stg_file_name)
+FROM (
+  SELECT $1, METADATA$FILENAME
+  FROM @ECOMMERCE_BRONZE_DB.OLIST.s3_olist_stage/order_items/
+)
+FILE_FORMAT = (TYPE = PARQUET);
+
+CREATE PIPE IF NOT EXISTS PIPE_ORDER_PAYMENTS
+  AUTO_INGEST = TRUE
+AS
+COPY INTO ORDER_PAYMENTS_RAW (_raw_data, _stg_file_name)
+FROM (
+  SELECT $1, METADATA$FILENAME
+  FROM @ECOMMERCE_BRONZE_DB.OLIST.s3_olist_stage/order_payments/
+)
+FILE_FORMAT = (TYPE = PARQUET);
+
+CREATE PIPE IF NOT EXISTS PIPE_ORDER_REVIEWS
+  AUTO_INGEST = TRUE
+AS
+COPY INTO ORDER_REVIEWS_RAW (_raw_data, _stg_file_name)
+FROM (
+  SELECT $1, METADATA$FILENAME
+  FROM @ECOMMERCE_BRONZE_DB.OLIST.s3_olist_stage/order_reviews/
+)
+FILE_FORMAT = (TYPE = PARQUET);
+
+CREATE PIPE IF NOT EXISTS PIPE_PRODUCTS
+  AUTO_INGEST = TRUE
+AS
+COPY INTO PRODUCTS_RAW (_raw_data, _stg_file_name)
+FROM (
+  SELECT $1, METADATA$FILENAME
+  FROM @ECOMMERCE_BRONZE_DB.OLIST.s3_olist_stage/products/
+)
+FILE_FORMAT = (TYPE = PARQUET);
+
+CREATE PIPE IF NOT EXISTS PIPE_SELLERS
+  AUTO_INGEST = TRUE
+AS
+COPY INTO SELLERS_RAW (_raw_data, _stg_file_name)
+FROM (
+  SELECT $1, METADATA$FILENAME
+  FROM @ECOMMERCE_BRONZE_DB.OLIST.s3_olist_stage/sellers/
+)
+FILE_FORMAT = (TYPE = PARQUET);
+
+-------------------------------------------------------------------
+
+SHOW PIPES;
+
+
+-------------------------------------------------------------------
+
+
+USE ROLE ACCOUNTADMIN;
+
+ALTER PIPE ECOMMERCE_BRONZE_DB.OLIST.PIPE_CUSTOMERS REFRESH;
+ALTER PIPE ECOMMERCE_BRONZE_DB.OLIST.PIPE_ORDERS REFRESH;
+ALTER PIPE ECOMMERCE_BRONZE_DB.OLIST.PIPE_ORDER_ITEMS REFRESH;
+ALTER PIPE ECOMMERCE_BRONZE_DB.OLIST.PIPE_ORDER_PAYMENTS REFRESH;
+ALTER PIPE ECOMMERCE_BRONZE_DB.OLIST.PIPE_ORDER_REVIEWS REFRESH;
+ALTER PIPE ECOMMERCE_BRONZE_DB.OLIST.PIPE_PRODUCTS REFRESH;
+ALTER PIPE ECOMMERCE_BRONZE_DB.OLIST.PIPE_SELLERS REFRESH;
+
+
+-------------------------------------------------------------------
+
+
+-- TESTING QUERIES
+
+SELECT COUNT(*) FROM ECOMMERCE_BRONZE_DB.OLIST.CUSTOMERS_RAW;
+SELECT COUNT(*) FROM ECOMMERCE_BRONZE_DB.OLIST.ORDERS_RAW;
+SELECT COUNT(*) FROM ECOMMERCE_BRONZE_DB.OLIST.PRODUCTS_RAW;
+
+
+
+SELECT 
+  _raw_data:customer_id::TEXT AS customer_id,
+  _raw_data:customer_city::TEXT AS customer_city,
+  _raw_data:customer_state::TEXT AS customer_state,
+  _stg_file_name,
+  _stg_load_time
+FROM ECOMMERCE_BRONZE_DB.OLIST.CUSTOMERS_RAW
+LIMIT 5;
+
+
+-------------------------------------------------------------------
