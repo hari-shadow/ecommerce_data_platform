@@ -27,7 +27,7 @@ def get_last_loaded_date(conn):
     result = cur.fetchone()[0]
     cur.close()
     # If table is empty, start from 2022-01-01
-    return result if result else date(2022, 1, 1)
+    return result if result else date(2016, 1, 1)
 
 
 def fetch_rates(start: date, end: date) -> list[dict]:
