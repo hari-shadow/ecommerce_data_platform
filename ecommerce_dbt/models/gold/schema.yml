@@ -1,0 +1,33 @@
+version: 2
+
+models:
+  - name: fact_orders
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - not_null
+
+  - name: dim_customers
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+      - name: customer_segment
+        tests:
+          - accepted_values:
+              values: ['High Value', 'Mid Value', 'Low Value']
+
+  - name: fact_revenue_usd
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+      - name: total_usd
+        tests:
+          - not_null
