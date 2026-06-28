@@ -69,6 +69,11 @@ def run():
     conn = snowflake.connector.connect(**SNOWFLAKE_CONFIG)
 
     # conn.cursor().execute(f"USE WAREHOUSE {SNOWFLAKE_CONFIG['warehouse']}")
+
+    cur = conn.cursor()
+    cur.execute(f"USE ROLE ECOMMERCE_ENGINEER")
+    cur.execute(f"USE WAREHOUSE {SNOWFLAKE_CONFIG['warehouse']}")
+    cur.close()
     
     last_date = get_last_loaded_date(conn)
     start     = last_date + timedelta(days=1)
