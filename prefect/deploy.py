@@ -18,7 +18,7 @@
 #     )
 
 
-from prefect.deployments import DeploymentImage
+# from prefect.deployments import DeploymentImage
 from prefect.runner.storage import GitRepository
 from flows import frankfurter_flow, dbt_flow, faker_flow
 
