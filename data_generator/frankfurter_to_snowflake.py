@@ -10,7 +10,7 @@ SNOWFLAKE_CONFIG = {
     "account":   os.getenv("SNOWFLAKE_ACCOUNT"),
     "user":      os.getenv("SNOWFLAKE_USER"),
     "password":  os.getenv("SNOWFLAKE_PASSWORD"),
-    "warehouse": "ECOMMERCE_BRONZE_WH",
+    "warehouse": os.getenv("SNOWFLAKE_WAREHOUSE"),
     "database":  "ECOMMERCE_BRONZE_DB",
     "schema":    "FRANKFURTER",
     "role":      "ECOMMERCE_ENGINEER",
@@ -26,7 +26,7 @@ def get_last_loaded_date(conn):
     cur.execute("SELECT MAX(rate_date) FROM EXCHANGE_RATES_RAW")
     result = cur.fetchone()[0]
     cur.close()
-    # If table is empty, start from 2022-01-01
+    # If table is empty, start from 2016-01-01
     return result if result else date(2016, 1, 1)
 
 
@@ -68,7 +68,7 @@ def insert_rates(conn, rows: list[dict]):
 def run():
     conn = snowflake.connector.connect(**SNOWFLAKE_CONFIG)
 
-    # conn.cursor().execute(f"USE WAREHOUSE {SNOWFLAKE_CONFIG['warehouse']}")
+    conn.cursor().execute(f"USE WAREHOUSE {SNOWFLAKE_CONFIG['warehouse']}")
 
     
     last_date = get_last_loaded_date(conn)
