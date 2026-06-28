@@ -10,7 +10,7 @@ SNOWFLAKE_CONFIG = {
     "account":   os.getenv("SNOWFLAKE_ACCOUNT"),
     "user":      os.getenv("SNOWFLAKE_USER"),
     "password":  os.getenv("SNOWFLAKE_PASSWORD"),
-    "warehouse": os.getenv("SNOWFLAKE_WAREHOUSE"),
+    "warehouse": "ECOMMERCE_BRONZE_WH",
     "database":  "ECOMMERCE_BRONZE_DB",
     "schema":    "FRANKFURTER",
     "role":      "ECOMMERCE_ENGINEER",
@@ -72,7 +72,7 @@ def run():
 
     cur = conn.cursor()
     cur.execute(f"USE ROLE ECOMMERCE_ENGINEER")
-    cur.execute(f"USE WAREHOUSE {SNOWFLAKE_CONFIG['warehouse']}")
+    cur.execute(f"USE WAREHOUSE ECOMMERCE_BRONZE_WH")
     cur.close()
     
     last_date = get_last_loaded_date(conn)
