@@ -68,7 +68,7 @@ def insert_rates(conn, rows: list[dict]):
 def run():
     conn = snowflake.connector.connect(**SNOWFLAKE_CONFIG)
 
-    conn.cursor().execute(f"USE WAREHOUSE {SNOWFLAKE_CONFIG['warehouse']}")
+    # conn.cursor().execute(f"USE WAREHOUSE {SNOWFLAKE_CONFIG['warehouse']}")
     
     last_date = get_last_loaded_date(conn)
     start     = last_date + timedelta(days=1)
